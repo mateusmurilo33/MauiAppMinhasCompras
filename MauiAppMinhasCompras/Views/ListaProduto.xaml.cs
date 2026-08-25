@@ -1,9 +1,12 @@
 using MauiAppMinhasCompras.Models;
+using System.Collections.ObjectModel;
 
 namespace MauiAppMinhasCompras.Views
 {
     public partial class ListaProduto : ContentPage
     {
+        ObservableCollection<Produto> produtos = new ObservableCollection<Produto>();
+
         public ListaProduto()
         {
             InitializeComponent();
@@ -13,22 +16,34 @@ namespace MauiAppMinhasCompras.Views
         {
             base.OnAppearing();
 
-            lista_produtos.ItemsSource = await App.Database.GetAll();
+            var lista = await App.Database.GetAll();
+
+            produtos.Clear();
+
+            foreach (var produto in lista)
+            {
+                produtos.Add(produto);
+            }
+
+            lista_produtos.ItemsSource = produtos;
         }
 
         private async void OnBuscaTextChanged(object sender, TextChangedEventArgs e)
         {
             string busca = e.NewTextValue;
 
-            if (string.IsNullOrWhiteSpace(busca))
+            var lista = string.IsNullOrWhiteSpace(busca)
+                ? await App.Database.GetAll()
+                : await App.Database.Search(busca);
+
+            produtos.Clear();
+
+            foreach (var produto in lista)
             {
-                lista_produtos.ItemsSource = await App.Database.GetAll();
-            }
-            else
-            {
-                lista_produtos.ItemsSource = await App.Database.Search(busca);
+                produtos.Add(produto);
             }
         }
+
         private async void OnProdutoSelecionado(object sender, SelectionChangedEventArgs e)
         {
             Produto produtoSelecionado = e.CurrentSelection.FirstOrDefault() as Produto;
@@ -54,7 +69,7 @@ namespace MauiAppMinhasCompras.Views
                 {
                     await App.Database.Delete(produtoSelecionado.Id);
 
-                    lista_produtos.ItemsSource = await App.Database.GetAll();
+                    produtos.Remove(produtoSelecionado);
 
                     await DisplayAlert(
                         "Sucesso",
