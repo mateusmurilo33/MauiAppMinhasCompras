@@ -24,41 +24,52 @@ namespace MauiAppMinhasCompras.Views
 
         private async void OnSalvarClicked(object sender, EventArgs e)
         {
-            if (produtoEdicao == null)
+            try
             {
-                Produto produto = new Produto
+                if (produtoEdicao == null)
                 {
-                    Descricao = txt_descricao.Text,
-                    Quantidade = double.Parse(txt_quantidade.Text),
-                    Preco = double.Parse(txt_preco.Text)
-                };
+                    Produto produto = new Produto
+                    {
+                        Descricao = txt_descricao.Text,
+                        Quantidade = double.Parse(txt_quantidade.Text),
+                        Preco = double.Parse(txt_preco.Text)
+                    };
 
-                await App.Database.Insert(produto);
+                    await App.Database.Insert(produto);
 
-                await DisplayAlert(
-                    "Sucesso",
-                    "Produto cadastrado com sucesso!",
-                    "OK"
-                );
+                    await DisplayAlert(
+                        "Sucesso",
+                        "Produto cadastrado com sucesso!",
+                        "OK"
+                    );
+                }
+                else
+                {
+                    produtoEdicao.Descricao = txt_descricao.Text;
+                    produtoEdicao.Quantidade = double.Parse(txt_quantidade.Text);
+                    produtoEdicao.Preco = double.Parse(txt_preco.Text);
+
+                    await App.Database.Update(produtoEdicao);
+
+                    await DisplayAlert(
+                        "Sucesso",
+                        "Produto atualizado com sucesso!",
+                        "OK"
+                    );
+                }
+
+                txt_descricao.Text = "";
+                txt_quantidade.Text = "";
+                txt_preco.Text = "";
             }
-            else
+            catch (Exception ex)
             {
-                produtoEdicao.Descricao = txt_descricao.Text;
-                produtoEdicao.Quantidade = double.Parse(txt_quantidade.Text);
-                produtoEdicao.Preco = double.Parse(txt_preco.Text);
-
-                await App.Database.Update(produtoEdicao);
-
                 await DisplayAlert(
-                    "Sucesso",
-                    "Produto atualizado com sucesso!",
+                    "Ops",
+                    "Ocorreu um erro: " + ex.Message,
                     "OK"
                 );
             }
-
-            txt_descricao.Text = "";
-            txt_quantidade.Text = "";
-            txt_preco.Text = "";
         }
     }
 }

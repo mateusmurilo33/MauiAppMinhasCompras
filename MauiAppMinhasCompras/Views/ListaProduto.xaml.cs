@@ -16,69 +16,113 @@ namespace MauiAppMinhasCompras.Views
         {
             base.OnAppearing();
 
-            var lista = await App.Database.GetAll();
-
-            produtos.Clear();
-
-            foreach (var produto in lista)
+            try
             {
-                produtos.Add(produto);
-            }
+                var lista = await App.Database.GetAll();
 
-            lista_produtos.ItemsSource = produtos;
+                produtos.Clear();
+
+                foreach (var produto in lista)
+                {
+                    produtos.Add(produto);
+                }
+
+                lista_produtos.ItemsSource = produtos;
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(
+                    "Ops",
+                    "Erro ao carregar os produtos: " + ex.Message,
+                    "OK"
+                );
+            }
         }
 
         private async void OnBuscaTextChanged(object sender, TextChangedEventArgs e)
         {
-            string busca = e.NewTextValue;
-
-            var lista = string.IsNullOrWhiteSpace(busca)
-                ? await App.Database.GetAll()
-                : await App.Database.Search(busca);
-
-            produtos.Clear();
-
-            foreach (var produto in lista)
+            try
             {
-                produtos.Add(produto);
+                string busca = e.NewTextValue;
+
+                var lista = string.IsNullOrWhiteSpace(busca)
+                    ? await App.Database.GetAll()
+                    : await App.Database.Search(busca);
+
+                produtos.Clear();
+
+                foreach (var produto in lista)
+                {
+                    produtos.Add(produto);
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(
+                    "Ops",
+                    "Erro ao pesquisar produto: " + ex.Message,
+                    "OK"
+                );
             }
         }
 
         private async void OnProdutoSelecionado(object sender, SelectionChangedEventArgs e)
         {
-            Produto produtoSelecionado = e.CurrentSelection.FirstOrDefault() as Produto;
-
-            if (produtoSelecionado != null)
+            try
             {
-                string acao = await DisplayActionSheet(
-                    "Escolha uma opção",
-                    "Cancelar",
-                    null,
-                    "Editar",
-                    "Excluir"
+                Produto produtoSelecionado =
+                    e.CurrentSelection.FirstOrDefault() as Produto;
+
+                if (produtoSelecionado != null)
+                {
+                    string acao = await DisplayActionSheet(
+                        "Escolha uma opção",
+                        "Cancelar",
+                        null,
+                        "Editar",
+                        "Excluir"
+                    );
+
+                    if (acao == "Editar")
+                    {
+                        await Navigation.PushAsync(
+                            new NovoProduto(produtoSelecionado)
+                        );
+                    }
+
+                    if (acao == "Excluir")
+                    {
+                        bool confirmar = await DisplayAlert(
+                            "Confirmar exclusão",
+                            "Deseja realmente excluir este produto?",
+                            "Sim",
+                            "Não"
+                        );
+
+                        if (confirmar)
+                        {
+                            await App.Database.Delete(produtoSelecionado.Id);
+
+                            produtos.Remove(produtoSelecionado);
+
+                            await DisplayAlert(
+                                "Sucesso",
+                                "Produto excluído com sucesso!",
+                                "OK"
+                            );
+                        }
+                    }
+
+                    lista_produtos.SelectedItem = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(
+                    "Ops",
+                    "Ocorreu um erro: " + ex.Message,
+                    "OK"
                 );
-
-                if (acao == "Editar")
-                {
-                    await Navigation.PushAsync(
-                        new NovoProduto(produtoSelecionado)
-                    );
-                }
-
-                if (acao == "Excluir")
-                {
-                    await App.Database.Delete(produtoSelecionado.Id);
-
-                    produtos.Remove(produtoSelecionado);
-
-                    await DisplayAlert(
-                        "Sucesso",
-                        "Produto excluído com sucesso!",
-                        "OK"
-                    );
-                }
-
-                lista_produtos.SelectedItem = null;
             }
         }
     }
